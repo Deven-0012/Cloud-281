@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libsndfile1 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY workers/ ./workers/
+COPY ml_interface.py .
+
+# Create models directory (will be mounted from host ./model directory)
+# The volume mount in docker-compose.yml maps ./model -> /models
+RUN mkdir -p /models
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+
+# Run the ML worker
+CMD ["python", "workers/ml_inference_worker.py"]
+

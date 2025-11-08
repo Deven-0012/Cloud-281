@@ -1,0 +1,255 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.venv
+venv/
+ENV/
+env/
+.venv
+
+# Node.js / React
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+.node_repl_history
+*.tgz
+.yarn-integrity
+# Note: package-lock.json should be committed (removed from ignore)
+# yarn.lock should be committed if using yarn
+
+# React / Vite
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Docker
+*.log
+docker-compose.override.yml
+.dockerignore
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres_data/
+mongodb_data/
+*.dump
+
+# Model Files (Large - exclude to avoid GitHub file size limits)
+# Model file is 7.6MB (under 100MB limit but better to exclude)
+# Use Git LFS or share via cloud storage if teammates need it
+model/*.keras
+model/*.h5
+model/*.pkl
+model/*.pth
+model/*.pt
+models/*.keras
+models/*.h5
+models/*.pkl
+models/*.pth
+models/*.pt
+*.keras
+*.h5
+*.pkl
+*.pth
+*.pt
+
+# Dataset Files (VERY LARGE - 2.8GB, must exclude!)
+# GitHub has 100MB file size limit, Dataset folder is 2.8GB
+# Share Dataset via Google Drive or cloud storage for teammates
+Dataset/
+Dataset/**
+dataset/
+datasets/
+**/*.wav
+**/*.mp3
+**/*.flac
+**/*.m4a
+**/*.aac
+**/*.ogg
+**/*.wma
+**/*.aiff
+**/*.au
+**/*.wave
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.aac
+*.ogg
+*.wma
+*.aiff
+*.au
+*.wave
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+.settings/
+*.iml
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+
+# AWS / Cloud
+.aws/
+*.pem
+*.key
+*.crt
+*.cert
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+.hypothesis/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local development
+local/
+local_config.py
+config.local.py
+
+# Downloaded files (from Google Drive, etc.)
+drive-download-*/
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# SSL Certificates
+*.pem
+*.key
+*.crt
+*.cert
+ssl/
+nginx/ssl/
+
+# Redis
+dump.rdb
+
+# MongoDB
+*.lock
+
+# PostgreSQL
+*.sql.backup
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Project specific temporary files
+PROJECT_SUMMARY.md
+TEST_BACKEND.md
+verify_model.sh
+test_backend.sh
+GITHUB_SETUP.md
+
+# Large files that exceed GitHub limits (>100MB)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+*.bz2
+
+node_modules/
+build/
+dist/
+.venv/
+__pycache__/
+.DS_Store
+*.log
