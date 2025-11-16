@@ -10,10 +10,12 @@ from datetime import datetime, timedelta
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# AWS Configuration
+# Configuration
 SNS_TOPIC_ARN = os.getenv('SNS_TOPIC_ARN', '')
 AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://smart_car_user:SecurePassword123!@postgres:5432/smart_car_surveillance')
+DATABASE_URL = os.getenv('DATABASE_URL')
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set")
 
 # Initialize AWS clients
 sns_client = boto3.client('sns', region_name=AWS_REGION) if SNS_TOPIC_ARN else None
