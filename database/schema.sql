@@ -2,7 +2,7 @@
 -- Database: smart_car_surveillance
 
 -- Create database
-CREATE DATABASE smart_car_surveillance;
+-- CREATE DATABASE smart_car_surveillance;
 
 \c smart_car_surveillance;
 

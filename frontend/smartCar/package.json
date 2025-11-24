@@ -11,10 +11,16 @@
     "start": "vite"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.6.5",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.554.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^6.30.1"
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^6.30.2",
+    "recharts": "^3.5.0",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",

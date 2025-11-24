@@ -1,0 +1,1 @@
+export const fmtTime = (iso) => new Date(iso).toLocaleString();

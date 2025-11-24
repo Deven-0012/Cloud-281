@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+
+
+/* (optional) custom theme tokens in v4 */
+@theme {
+  --color-primary: #4f46e5;
+}
+
+.btn-dark { @apply inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm bg-neutral-900 text-white hover:opacity-90; }
+
+.leaflet-container { height: 100%; width: 100%; }
+.map-card { height: 460px; }
+
+.btn-primary { @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-neutral-900 text-white hover:opacity-90; }
+.btn-secondary { @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm bg-neutral-100 hover:bg-neutral-200; }
+.btn-outline { @apply inline-flex items-center gap-2 px-3 py-2 rounded-xl text-sm border border-neutral-300 text-neutral-800 bg-white hover:bg-neutral-50; }
+
+.table-rounded thead tr:first-child th:first-child { border-top-left-radius: 12px; }
+.table-rounded thead tr:first-child th:last-child { border-top-right-radius: 12px; }

@@ -1,64 +1,111 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import './LoginPage.css';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
+export default function LoginPage() {
+  const [role, setRole] = useState("user");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (login(email, password)) {
-      navigate('/dashboard');
-    } else {
-      setError('Invalid email or password');
-    }
-  };
-
   return (
-    <div className="login-container">
-      <div className="login-box">
-        <h1>Smart Car Cloud</h1>
-        <h2>Sign In</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="admin@tesla-fleet.com"
-            />
+    <div className="min-h-dvh bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md">
+        <div className="relative rounded-3xl border bg-white/80 backdrop-blur-xl shadow-[0_10px_30px_-12px_rgba(0,0,0,0.25)]">
+          <div className="absolute -inset-[1px] rounded-3xl bg-gradient-to-tr from-gray-900/5 via-gray-900/0 to-gray-900/5 pointer-events-none" />
+
+          <div className="relative p-8 md:p-10">
+            <div className="mb-6">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gray-900 text-white font-bold">
+                SC
+              </div>
+              <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+                Welcome back
+              </h1>
+              <p className="mt-1 text-sm text-gray-600">
+                Sign in to continue to your dashboard.
+              </p>
+            </div>
+
+            <form className="space-y-5">
+              <div className="space-y-2">
+                <label htmlFor="email" className="block text-sm font-medium">
+                  Email
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:border-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-12 outline-none focus:border-gray-900"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute inset-y-0 right-0 px-3 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="role" className="block text-sm font-medium">
+                  Role
+                </label>
+                <select
+                  id="role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:border-gray-900"
+                >
+                  <option value="user">User</option>
+                  <option value="staff">Staff</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 font-medium text-white transition hover:bg-black active:scale-[.99]"
+                onClick={() => navigate("/dashboard")}
+              >
+                Sign in
+              </button>
+
+              <div className="flex items-center justify-between text-sm text-gray-600">
+                <a
+                  className="underline underline-offset-4 hover:no-underline"
+                  href="#"
+                >
+                  Forgot password?
+                </a>
+                <span>
+                  New here?{" "}
+                  <Link
+                    to="/register"
+                    className="text-gray-900 underline underline-offset-4 hover:no-underline"
+                  >
+                    Create an account
+                  </Link>
+                </span>
+              </div>
+            </form>
           </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="admin123"
-            />
-          </div>
-          <button type="submit" className="login-btn">Sign In</button>
-        </form>
-        <div className="login-hint">
-          <p>Default credentials:</p>
-          <p>Email: admin@tesla-fleet.com</p>
-          <p>Password: admin123</p>
         </div>
+        <p className="mt-6 text-center text-xs text-gray-500">
+          By continuing you agree to our Terms & Privacy Policy.
+        </p>
       </div>
     </div>
   );
-};
-
-export default LoginPage;
-
+}

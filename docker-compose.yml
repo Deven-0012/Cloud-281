@@ -158,7 +158,7 @@ services:
       - smart-car-network
     depends_on:
       - ingestion-service
-    command: npm run dev
+    command: sh -c "npm run dev -- --host 0.0.0.0 --port 3000"
 
   # Nginx Reverse Proxy
   nginx:
