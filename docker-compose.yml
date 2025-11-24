@@ -101,22 +101,21 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION:-us-west-2}
       - S3_BUCKET=${S3_BUCKET:-smart-car-audio-storage}
-      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
-      - MODEL_PATH=${MODEL_PATH:-/models/my_yamnet_human_model.keras}
+      - SQS_QUEUE_URL=https://sqs.us-west-2.amazonaws.com/123456789012/my-queue-name
+      - MODEL_PATH=/models/my_yamnet_human_model_fixed.keras
     volumes:
       - ./backend/workers:/app/workers
       - ./backend:/app
-      # Mount host 'model' directory to container '/models' directory
-      # This allows the code to use /models while your folder is named 'model'
       - ./model:/models
     networks:
       - smart-car-network
     depends_on:
       - mongodb
-      - ingestion-service
       - postgres
+      - ingestion-service
     restart: unless-stopped
     command: python workers/ml_inference_worker.py
+
 
   # Alert & Rule Engine
   alert-engine:

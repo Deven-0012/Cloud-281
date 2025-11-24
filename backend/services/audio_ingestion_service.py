@@ -6,7 +6,6 @@ Flask API for receiving audio uploads and feature submissions
 import os
 import json
 import hashlib
-import boto3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime
@@ -14,31 +13,30 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import uuid
 import time
+import shutil
+from pathlib import Path
 
 app = Flask(__name__)
 CORS(app)
 
 # Configuration
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_REGION = os.getenv('AWS_REGION', 'us-west-2')
-S3_BUCKET = os.getenv('S3_BUCKET', 'smart-car-audio-storage')
-SQS_QUEUE_URL = os.getenv('SQS_QUEUE_URL')
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://smart_car_user:SecurePassword123!@postgres:5432/smart_car_surveillance')
+LOCAL_STORAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'audio_uploads')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
-# Initialize AWS clients
-s3_client = boto3.client(
-    's3',
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
-)
-sqs_client = boto3.client(
-    'sqs',
-    aws_access_key_id=AWS_ACCESS_KEY_ID,
-    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    region_name=AWS_REGION
-)
+# Create local storage directory if it doesn't exist
+os.makedirs(LOCAL_STORAGE_PATH, exist_ok=True)
+
+def save_file_locally(file_data, file_path):
+    """Save file to local storage"""
+    full_path = os.path.join(LOCAL_STORAGE_PATH, file_path)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    with open(full_path, 'wb') as f:
+        f.write(file_data)
+    return full_path
+
+def get_file_url(file_path):
+    """Get local file URL"""
+    return f"file://{os.path.join(LOCAL_STORAGE_PATH, file_path)}"
 
 # Database connection helper
 def get_db_connection():
@@ -73,130 +71,210 @@ def init_audio_upload():
     """
     try:
         data = request.get_json()
-        
-        if not data or 'carId' not in data:
-            return jsonify({'error': 'Missing required field: carId'}), 400
-        
-        car_id = data['carId']
-        codec = data.get('codec', 'wav')
-        sample_rate = data.get('sampleRate', 44100)
-        duration = data.get('duration', 30.0)
-        channels = data.get('channels', 1)
-        
-        # Generate S3 key
-        timestamp = int(time.time() * 1000)
-        s3_key = f"audio/{car_id}/{timestamp}.{codec}"
-        
-        # Create ingestion job in database
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        # Validate required fields
+        required_fields = ['carId', 'codec', 'sampleRate', 'duration', 'channels']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
+        # Generate unique job ID and file path
+        job_id = str(uuid.uuid4())
+        timestamp = int(time.time())
+        file_extension = data['codec'].lower()
+        file_path = f"{data['carId']}/{timestamp}.{file_extension}"
+
+        # Create job record in database
         conn = get_db_connection()
         if not conn:
-            return jsonify({'error': 'Database connection failed'}), 500
-        
+            return jsonify({"error": "Database connection failed"}), 500
+
         try:
-            cur = conn.cursor()
-            cur.execute("""
-                INSERT INTO ingestion_job 
-                (vehicle_id, s3_bucket, s3_key, status, sample_rate, channels, duration)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING job_id
-            """, (car_id, S3_BUCKET, s3_key, 'pending', sample_rate, channels, duration))
-            
-            job_id = cur.fetchone()[0]
-            conn.commit()
-            cur.close()
-            
-            # Generate presigned URL for upload
-            presigned_url = s3_client.generate_presigned_url(
-                'put_object',
-                Params={
-                    'Bucket': S3_BUCKET,
-                    'Key': s3_key,
-                    'ContentType': f'audio/{codec}'
-                },
-                ExpiresIn=3600
-            )
-            
-            return jsonify({
-                'jobId': str(job_id),
-                's3Key': s3_key,
-                'uploadUrl': presigned_url,
-                'message': 'Upload session initialized'
-            }), 200
-            
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO ingestion_job (
+                        job_id, car_id, status, s3_key, 
+                        codec, sample_rate, duration, channels, 
+                        created_at, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    RETURNING job_id, created_at
+                """, (
+                    job_id, data['carId'], 'uploading', file_path,
+                    data['codec'], data['sampleRate'], data['duration'], data['channels']
+                ))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                return jsonify({
+                    "jobId": result['job_id'],
+                    "filePath": file_path,
+                    "createdAt": result['created_at'].isoformat()
+                }), 200
+
         except Exception as e:
             conn.rollback()
-            return jsonify({'error': f'Database error: {str(e)}'}), 500
+            print(f"Database error: {e}")
+            return jsonify({"error": "Failed to create upload session"}), 500
+        finally:
+            conn.close()
+
+    except Exception as e:
+        print(f"Error in init_audio_upload: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/api/upload', methods=['POST'])
+def upload_audio():
+    """
+    Handle direct file upload
+    Expected form data:
+    - file: The audio file
+    - carId: Vehicle ID
+    - codec: Audio codec (e.g., wav, mp3)
+    - sampleRate: Sample rate in Hz
+    - duration: Duration in seconds
+    - channels: Number of audio channels
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file part"}), 400
+            
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+            
+        # Get form data
+        car_id = request.form.get('carId')
+        codec = request.form.get('codec', 'wav')
+        sample_rate = request.form.get('sampleRate', 44100, type=int)
+        duration = request.form.get('duration', 0, type=float)
+        channels = request.form.get('channels', 1, type=int)
+        
+        # Generate unique file path
+        timestamp = int(time.time())
+        file_extension = codec.lower()
+        file_path = f"{car_id}/{timestamp}.{file_extension}"
+        
+        # Save file locally
+        file_data = file.read()
+        save_file_locally(file_data, file_path)
+        
+        # Create job record in database
+        job_id = str(uuid.uuid4())
+        conn = get_db_connection()
+        if not conn:
+            return jsonify({"error": "Database connection failed"}), 500
+            
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO ingestion_job (
+                        job_id, car_id, status, s3_key, 
+                        codec, sample_rate, duration, channels, 
+                        created_at, updated_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
+                    RETURNING job_id, created_at
+                """, (
+                    job_id, car_id, 'pending', file_path,
+                    codec, sample_rate, duration, channels
+                ))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                return jsonify({
+                    "jobId": result['job_id'],
+                    "filePath": file_path,
+                    "createdAt": result['created_at'].isoformat()
+                }), 200
+                
+        except Exception as e:
+            conn.rollback()
+            print(f"Database error: {e}")
+            return jsonify({"error": "Failed to process upload"}), 500
+            
         finally:
             conn.close()
             
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"Error in upload_audio: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
-@app.route('/v1/ingest/audio/complete', methods=['POST'])
+@app.route('/api/upload/complete', methods=['POST'])
 def complete_audio_upload():
     """
     Complete audio upload and queue for processing
     Expected payload:
     {
         "jobId": "uuid",
-        "s3Key": "audio/CAR-A1234/1234567890.wav",
+        "filePath": "CAR-A1234/1234567890.wav",
         "checksum": "sha256_hash"
     }
     """
     try:
         data = request.get_json()
-        
-        if not data or 'jobId' not in data or 's3Key' not in data:
-            return jsonify({'error': 'Missing required fields: jobId, s3Key'}), 400
-        
+        if not data or 'jobId' not in data or 'filePath' not in data:
+            return jsonify({"error": "Missing required fields"}), 400
+
         job_id = data['jobId']
-        s3_key = data['s3Key']
-        checksum = data.get('checksum', '')
-        
-        # Update job status
+        file_path = data['filePath']
+        checksum = data.get('checksum')
+
+        # Update job status in database
         conn = get_db_connection()
         if not conn:
-            return jsonify({'error': 'Database connection failed'}), 500
-        
+            return jsonify({"error": "Database connection failed"}), 500
+
         try:
-            cur = conn.cursor(cursor_factory=RealDictCursor)
-            
-            # Get job details
-            cur.execute("""
-                SELECT vehicle_id, s3_bucket FROM ingestion_job 
-                WHERE job_id = %s
-            """, (job_id,))
-            
-            job = cur.fetchone()
-            if not job:
-                return jsonify({'error': 'Job not found'}), 404
-            
-            vehicle_id = job['vehicle_id']
-            s3_bucket = job['s3_bucket']
-            
-            # Update job with checksum and mark as processing
-            cur.execute("""
-                UPDATE ingestion_job 
-                SET status = 'processing', checksum = %s
-                WHERE job_id = %s
-            """, (checksum, job_id))
-            conn.commit()
-            
-            # Send message to SQS for ML processing
-            if SQS_QUEUE_URL:
-                message_body = {
-                    'carId': vehicle_id,
-                    's3Key': s3_key,
-                    's3Bucket': s3_bucket,
-                    'jobId': str(job_id),
-                    'timestamp': datetime.utcnow().isoformat()
-                }
+            with conn.cursor() as cur:
+                # Update job status to processing
+                cur.execute("""
+                    UPDATE ingestion_job 
+                    SET status = 'processing', 
+                        s3_key = %s,
+                        checksum = %s,
+                        updated_at = NOW()
+                    WHERE job_id = %s
+                    RETURNING job_id, car_id, status
+                """, (file_path, checksum, job_id))
                 
-                sqs_client.send_message(
-                    QueueUrl=SQS_QUEUE_URL,
-                    MessageBody=json.dumps(message_body),
-                    MessageAttributes={
-                        'ProcessingType': {
+                result = cur.fetchone()
+                if not result:
+                    return jsonify({"error": "Job not found"}), 404
+                    
+                conn.commit()
+                
+                # In a real implementation, you would queue the job for ML processing here
+                # For local development, we'll just update the status to completed
+                cur.execute("""
+                    UPDATE ingestion_job 
+                    SET status = 'completed', 
+                        updated_at = NOW()
+                    WHERE job_id = %s
+                """, (job_id,))
+                conn.commit()
+                
+                return jsonify({
+                    "jobId": result['job_id'],
+                    "status": "completed",
+                    "filePath": file_path
+                }), 200
+                
+        except Exception as e:
+            conn.rollback()
+            print(f"Database error: {e}")
+            return jsonify({"error": "Failed to process upload completion"}), 500
+            
+        finally:
+            conn.close()
+            
+    except Exception as e:
+        print(f"Error in complete_audio_upload: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+                # Local processing complete
+                print(f"Job {job_id} marked as completed for file: {file_path}")
                             'DataType': 'String',
                             'StringValue': 'audio'
                         },
@@ -492,5 +570,6 @@ def get_dashboard_stats():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001, debug=True)
-
+    # Create uploads directory if it doesn't exist
+    os.makedirs(LOCAL_STORAGE_PATH, exist_ok=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
