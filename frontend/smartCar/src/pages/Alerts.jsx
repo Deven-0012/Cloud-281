@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import axios from "axios";
 import AlertsFilter from "../components/alerts/AlertsFilter";
 import AlertsMap from "../components/maps/AlertsMap";
 import AlertsTable from "../components/alerts/AlertsTable";
 import Card from "../components/ui/Card";
-import { mockAlerts } from "../data/mockData";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 function Pill({ tone = "red", children }) {
   const tones = {
@@ -19,11 +21,73 @@ function Pill({ tone = "red", children }) {
 }
 
 export default function Alerts() {
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     type: "All",
     conf: "All",
     time: "All Time",
   });
+
+  useEffect(() => {
+    fetchAlerts();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAlerts, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAlertDelete = (deletedAlertId) => {
+    // Remove deleted alert from state
+    setAlerts(alerts.filter(a => a.id !== deletedAlertId));
+    // Optionally refresh the list
+    fetchAlerts();
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/v1/alerts`, {
+        params: { limit: 100 }
+      });
+      
+      // Transform API data to match component expectations
+      // Map to: Emergency, High priority, Low risk (instead of Emergency, Safety, Anomaly)
+      const transformed = response.data.alerts.map(alert => {
+        let type;
+        if (alert.alert_type === 'emergency') {
+          type = 'Emergency';
+        } else {
+          // Map based on priority: high/critical severity = High priority, else = Low risk
+          const priority = alert.priority || (alert.severity === 'critical' ? 'high' : 
+                          alert.severity === 'high' ? 'high' : 
+                          alert.severity === 'medium' ? 'medium' : 'low');
+          type = (priority === 'high') ? 'High priority' : 'Low risk';
+        }
+        
+        return {
+          id: alert.alert_id,
+          type: type,
+          priority: alert.priority || (alert.severity === 'critical' ? 'high' : 
+                  alert.severity === 'high' ? 'high' : 
+                  alert.severity === 'medium' ? 'medium' : 'low'),
+          severity: alert.severity,
+          sound: alert.sound_label,
+          confidence: alert.confidence || 0,
+          ts: new Date(alert.created_at).getTime(),
+          vehicle: alert.vehicle_id,
+          vehicleId: alert.vehicle_id,  // Add both for compatibility
+          location: alert.location,
+          message: alert.message,
+          status: alert.status
+        };
+      });
+      
+      setAlerts(transformed);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
     const now = Date.now();
@@ -53,22 +117,30 @@ export default function Alerts() {
       return true;
     };
 
-    return mockAlerts.filter(
+    return alerts.filter(
       (a) =>
         (filters.type === "All" || a.type === filters.type) &&
         meetsConf(a.confidence) &&
         inRange(a.ts)
     );
-  }, [filters]);
+  }, [alerts, filters]);
 
   const counts = useMemo(
     () => ({
       Emergency: filtered.filter((a) => a.type === "Emergency").length,
-      Safety: filtered.filter((a) => a.type === "Safety").length,
-      Anomaly: filtered.filter((a) => a.type === "Anomaly").length,
+      "High priority": filtered.filter((a) => a.type === "High priority").length,
+      "Low risk": filtered.filter((a) => a.type === "Low risk").length,
     }),
     [filtered]
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-neutral-600">Loading alerts...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -116,15 +188,15 @@ export default function Alerts() {
   <div className="flex-1 space-y-4">
     <div className="grid sm:grid-cols-3 gap-3">
       <Pill tone="red">Emergency: {counts.Emergency}</Pill>
-      <Pill tone="amber">Safety: {counts.Safety}</Pill>
-      <Pill tone="blue">Anomaly: {counts.Anomaly}</Pill>
+      <Pill tone="amber">High priority: {counts["High priority"]}</Pill>
+      <Pill tone="blue">Low risk: {counts["Low risk"]}</Pill>
     </div>
     <AlertsMap alerts={filtered} />
   </div>
 </div>
 
 
-      <AlertsTable alerts={filtered} />
+      <AlertsTable alerts={filtered} onDelete={handleAlertDelete} />
     </div>
   );
 }

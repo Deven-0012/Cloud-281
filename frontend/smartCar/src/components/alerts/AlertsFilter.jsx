@@ -11,7 +11,7 @@ export default function AlertsFilter({ value, onChange, onReset }) {
           label="Sound Type"
           value={value.type}
           onChange={(v) => set("type", v)}
-          options={["All", "Emergency", "Safety", "Anomaly"]}
+          options={["All", "Emergency", "High priority", "Low risk"]}
         />
         <LabeledSelect
           label="Confidence"

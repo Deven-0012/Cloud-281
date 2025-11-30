@@ -104,13 +104,15 @@ SNS_TOPIC_ARN=arn:aws:sns:us-west-2:123456789:smart-car-alerts
 Download the YAMNet model from:
 - [Model Link](https://drive.google.com/drive/folders/1GBjx2QcLLWtKXeiKAK0iu99Tga3v-wh8)
 
-Place `my_yamnet_human_model.keras` in the `model/` directory:
+Place the model file in the `model/` directory. The model file should be named `my_yamnet_human_model_fixed.keras`:
 
 ```bash
 # The model/ directory should already exist
-# Ensure my_yamnet_human_model.keras is in model/
+# Ensure my_yamnet_human_model_fixed.keras is in model/
 ls -la model/
 ```
+
+**Note:** The model file name must match `my_yamnet_human_model_fixed.keras` as configured in docker-compose.yml and the ML worker.
 
 ### Step 4: Deploy
 

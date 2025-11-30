@@ -35,7 +35,7 @@ export default function AlertDetails() {
   }
 
   const tone =
-    alert.type === "Emergency" ? "red" : alert.type === "Safety" ? "amber" : "blue";
+    alert.type === "Emergency" ? "red" : alert.type === "High priority" ? "amber" : "blue";
 
   return (
     <div className="space-y-6">

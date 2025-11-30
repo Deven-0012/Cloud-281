@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
-  const [role, setRole] = useState("user");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   return (
     <div className="min-h-dvh bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center px-4 py-10">
@@ -25,7 +30,27 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <form className="space-y-5">
+            <form 
+              className="space-y-5"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setError("");
+                setLoading(true);
+                const result = await login(email, password);
+                setLoading(false);
+                if (result.success) {
+                  navigate("/");
+                } else {
+                  setError(result.error || "Login failed");
+                }
+              }}
+            >
+              {error && (
+                <div className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                  {error}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label htmlFor="email" className="block text-sm font-medium">
                   Email
@@ -34,6 +59,9 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:border-gray-900"
                 />
               </div>
@@ -47,6 +75,9 @@ export default function LoginPage() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                     className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-12 outline-none focus:border-gray-900"
                   />
                   <button
@@ -59,27 +90,12 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label htmlFor="role" className="block text-sm font-medium">
-                  Role
-                </label>
-                <select
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:border-gray-900"
-                >
-                  <option value="user">User</option>
-                  <option value="staff">Staff</option>
-                </select>
-              </div>
-
               <button
-                type="button"
-                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 font-medium text-white transition hover:bg-black active:scale-[.99]"
-                onClick={() => navigate("/dashboard")}
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 font-medium text-white transition hover:bg-black active:scale-[.99] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Sign in
+                {loading ? "Signing in..." : "Sign in"}
               </button>
 
               <div className="flex items-center justify-between text-sm text-gray-600">

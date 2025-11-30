@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY workers/ ./workers/
-COPY ml_interface.py .
+# COPY ml_interface.py .
 
 # Create models directory (will be mounted from host ./model directory)
 # The volume mount in docker-compose.yml maps ./model -> /models

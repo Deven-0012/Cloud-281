@@ -1,10 +1,7 @@
 -- Smart Car Audio Surveillance Platform - PostgreSQL Schema
 -- Database: smart_car_surveillance
-
--- Create database
--- CREATE DATABASE smart_car_surveillance;
-
-\c smart_car_surveillance;
+-- Note: This file is executed in the context of the database specified in POSTGRES_DB
+-- The \c command is not needed in Docker initialization scripts
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -227,5 +224,3 @@ SELECT
     TRUE, 
     TRUE
 FROM tenant WHERE email = 'admin@tesla-fleet.com';
-
-COMMIT;
