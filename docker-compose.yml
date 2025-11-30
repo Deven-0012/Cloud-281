@@ -1,4 +1,4 @@
-version: '3.8'
+# Docker Compose file for Smart Car Audio Surveillance Platform
 
 services:
   # PostgreSQL Database
@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: smart_car_user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-SecurePassword123!}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -101,8 +101,8 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION:-us-west-2}
       - S3_BUCKET=${S3_BUCKET:-smart-car-audio-storage}
-      - SQS_QUEUE_URL=https://sqs.us-west-2.amazonaws.com/123456789012/my-queue-name
-      - MODEL_PATH=/models/my_yamnet_human_model_fixed.keras
+      - SQS_QUEUE_URL=${SQS_QUEUE_URL}
+      - MODEL_PATH=${MODEL_PATH:-/models/my_yamnet_human_model_fixed.keras}
     volumes:
       - ./backend/workers:/app/workers
       - ./backend:/app

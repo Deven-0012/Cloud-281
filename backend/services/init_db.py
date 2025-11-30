@@ -25,22 +25,11 @@ def create_database():
     conn = psycopg2.connect(os.getenv('DATABASE_URL'))
     cur = conn.cursor()
     
-    # Create the table
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS ingestion_job (
-        job_id UUID PRIMARY KEY,
-        car_id VARCHAR(50) NOT NULL,
-        status VARCHAR(20) NOT NULL,
-        s3_key TEXT,
-        codec VARCHAR(10),
-        sample_rate INTEGER,
-        duration FLOAT,
-        channels INTEGER,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        checksum VARCHAR(64)
-    );
-    """)
+    # Note: The main schema is defined in database/schema.sql
+    # This file is kept for backward compatibility but the schema.sql should be used
+    # The schema.sql uses vehicle_id instead of car_id to match the main schema
+    print("Note: Database schema should be initialized using database/schema.sql")
+    print("This script is kept for reference only.")
     
     conn.commit()
     print("Created ingestion_job table")

@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import DevicesToolbar from "../components/devices/DevicesToolbar";
 import DeviceTable from "../components/devices/DeviceTable";
 import DeviceCard from "../components/devices/DeviceCard";
@@ -8,11 +10,25 @@ import { mockDevices } from "../data/mockData";
 
 
 export default function Devices() {
-const [view, setView] = useState("table"); // table | grid
-const [status, setStatus] = useState("All"); // All | Online | Offline
-const [type, setType] = useState("All"); // All | Microphone | Camera | Other
-const [query, setQuery] = useState("");
-const [sortBy, setSortBy] = useState("id"); // id | car | type | status | rssi | lastSeen
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [view, setView] = useState("table"); // table | grid
+  const [status, setStatus] = useState("All"); // All | Online | Offline
+  const [type, setType] = useState("All"); // All | Microphone | Camera | Other
+  const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState("id"); // id | car | type | status | rssi | lastSeen
+
+  useEffect(() => {
+    // Redirect owners away from Devices page
+    if (user && user.role !== 'admin') {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  // Don't render if user is not admin
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
 
 const stats = useMemo(() => {

@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import ChartCard from "../components/analytics/ChartCard";
 import AlertTrendsChart from "../components/analytics/AlertTrendsChart";
 import FleetStatusDonut from "../components/analytics/FleetStatusDonut";
@@ -25,7 +27,21 @@ function Segmented({ value, onChange, options }) {
 }
 
 export default function Analytics() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [view, setView] = useState("All"); // All | Emergency | Safety | Anomaly
+
+  useEffect(() => {
+    // Redirect owners away from Analytics page
+    if (user && user.role !== 'admin') {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  // Don't render if user is not admin
+  if (!user || user.role !== 'admin') {
+    return null;
+  }
 
   const trends = useMemo(() => {
     if (view === "All") return alertTrends;

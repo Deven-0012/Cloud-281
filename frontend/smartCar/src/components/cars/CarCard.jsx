@@ -9,7 +9,7 @@ export default function CarCard({ car }) {
       ? "bg-emerald-100 text-emerald-700"
       : "bg-neutral-100 text-neutral-700";
 
-  const alert = car.latestAlert; // { type: 'Emergency'|'Safety'|'Anomaly', title: string } or null
+  const alert = car.latestAlert; // { type: 'Emergency'|'High priority'|'Low risk', title: string } or null
 
   const banner = (() => {
     if (!alert) {
@@ -27,17 +27,17 @@ export default function CarCard({ car }) {
         </Banner>
       );
     }
-    if (alert.type === "Safety") {
+    if (alert.type === "High priority") {
       return (
         <Banner tone="amber" icon={<AlertTriangle className="w-4 h-4" />}>
-          <span className="font-medium">Safety</span>
+          <span className="font-medium">High priority</span>
           <span className="ml-2 opacity-90">{alert.title}</span>
         </Banner>
       );
     }
     return (
       <Banner tone="green" icon={<CheckCircle2 className="w-4 h-4" />}>
-        <span className="font-medium">Anomaly</span>
+        <span className="font-medium">Low risk</span>
         <span className="ml-2 opacity-90">{alert.title}</span>
       </Banner>
     );

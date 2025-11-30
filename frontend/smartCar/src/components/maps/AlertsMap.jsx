@@ -45,7 +45,9 @@ export default function AlertsMap({ alerts }) {
           />
           <InvalidateOnResize />
           <FitToMarkers points={alerts} />
-          {alerts.map((a) => (
+          {alerts
+            .filter(a => a.location && a.location.lat && a.location.lng)
+            .map((a) => (
             <Marker
               key={a.id}
               position={[a.location.lat, a.location.lng]}
@@ -56,6 +58,9 @@ export default function AlertsMap({ alerts }) {
                     #{a.id} · {a.type}
                   </div>
                   <div className="text-neutral-600">{a.sound}</div>
+                  <div className="text-xs text-neutral-500 mt-1">
+                    Priority: {a.priority || 'medium'}
+                  </div>
                   <Link
                     to={`/alerts/${a.id}`}
                     className="text-blue-600 hover:underline"

@@ -1,17 +1,62 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import axios from "axios";
 import Card from "../ui/Card";
 import Badge from "../ui/Badge";
 import Tabs from "../ui/Tabs";
 import { MapPin } from "lucide-react";
 import { fmtTime } from "../../utils/format";
-import { mockAlerts } from "../../data/mockData";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function AlertsFeed() {
   const [filter, setFilter] = useState("All");
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAlerts();
+    const interval = setInterval(fetchAlerts, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchAlerts = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/v1/alerts`, {
+        params: { limit: 10 }
+      });
+      
+      const transformed = response.data.alerts.map(alert => {
+        let type;
+        if (alert.alert_type === 'emergency') {
+          type = 'Emergency';
+        } else {
+          const priority = alert.priority || (alert.severity === 'critical' ? 'high' : 
+                          alert.severity === 'high' ? 'high' : 
+                          alert.severity === 'medium' ? 'medium' : 'low');
+          type = (priority === 'high') ? 'High priority' : 'Low risk';
+        }
+        
+        return {
+          id: alert.alert_id,
+          type: type,
+          vehicleId: alert.vehicle_id,
+          title: alert.sound_label || 'Unknown sound',
+          ts: new Date(alert.created_at).getTime(),
+          confidence: alert.confidence || 0
+        };
+      });
+      
+      setAlerts(transformed);
+    } catch (error) {
+      console.error('Error fetching alerts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = useMemo(() => {
-    return mockAlerts.filter((a) => filter === "All" || a.type === filter);
-  }, [filter]);
+    return alerts.filter((a) => filter === "All" || a.type === filter);
+  }, [alerts, filter]);
 
   return (
     <Card>
@@ -25,19 +70,24 @@ export default function AlertsFeed() {
         <Tabs
           value={filter}
           onChange={setFilter}
-          options={["All", "Emergency", "Safety", "Anomaly"]}
+          options={["All", "Emergency", "High priority", "Low risk"]}
         />
       </div>
 
       <div className="divide-y divide-neutral-200">
-        {filtered.map((a) => (
+        {loading ? (
+          <div className="py-3 text-center text-neutral-500">Loading alerts...</div>
+        ) : filtered.length === 0 ? (
+          <div className="py-3 text-center text-neutral-500">No alerts found</div>
+        ) : (
+          filtered.map((a) => (
           <div key={a.id} className="py-3 flex items-start gap-3">
             <div className="w-28 flex flex-col gap-1">
               <Badge
                 tone={
                   a.type === "Emergency"
                     ? "red"
-                    : a.type === "Safety"
+                    : a.type === "High priority"
                     ? "amber"
                     : "violet"
                 }
@@ -62,7 +112,8 @@ export default function AlertsFeed() {
               <MapPin className="w-4 h-4" /> Map
             </button>
           </div>
-        ))}
+        ))
+        )}
       </div>
     </Card>
   );

@@ -1,6 +1,7 @@
 import React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { Cpu, BarChart3, Map, Car, Gauge, LogOut } from "lucide-react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Shell() {
   return (
@@ -37,6 +38,14 @@ export default function Shell() {
 }
 
 function TopNav() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
   return (
     <div className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-neutral-200">
       <div className="mx-auto max-w-7xl px-4 h-14 flex items-center gap-4">
@@ -58,22 +67,37 @@ function TopNav() {
             icon={<Map className="w-4 h-4" />}
           />
           <TopLink to="/cars" label="Cars" icon={<Car className="w-4 h-4" />} />
-          <TopLink
-            to="/analytics"
-            label="Analytics"
-            icon={<Gauge className="w-4 h-4" />}
-          />
-          <TopLink
-            to="/devices"
-            label="Devices"
-            icon={<Cpu className="w-4 h-4" />}
-          />
+          {/* Admin-only links */}
+          {user?.role === 'admin' && (
+            <>
+              <TopLink
+                to="/analytics"
+                label="Analytics"
+                icon={<Gauge className="w-4 h-4" />}
+              />
+              <TopLink
+                to="/devices"
+                label="Devices"
+                icon={<Cpu className="w-4 h-4" />}
+              />
+            </>
+          )}
         </nav>
 
-        {/* Logout Button */}
-        <button className="ml-auto inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 transition">
-          <LogOut className="w-4 h-4" /> Logout
-        </button>
+        {/* User Info & Logout */}
+        <div className="ml-auto flex items-center gap-3">
+          {user && (
+            <span className="text-sm text-neutral-600">
+              {user.full_name || user.email} ({user.role})
+            </span>
+          )}
+          <button 
+            onClick={handleLogout}
+            className="inline-flex items-center gap-2 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium hover:bg-neutral-100 transition"
+          >
+            <LogOut className="w-4 h-4" /> Logout
+          </button>
+        </div>
       </div>
     </div>
   );

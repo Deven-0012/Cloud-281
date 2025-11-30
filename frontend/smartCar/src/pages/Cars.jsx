@@ -1,34 +1,81 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
+import axios from "axios";
 import CarsToolbar from "../components/cars/CarsToolbar";
 import CarCard from "../components/cars/CarCard";
-import { mockCars } from "../data/mockData";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 export default function Cars() {
-  const [status, setStatus] = useState("All"); // All | Active | Idle
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState("All");
   const [city, setCity] = useState("All");
   const [query, setQuery] = useState("");
 
+  useEffect(() => {
+    fetchVehicles();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchVehicles, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/v1/vehicles`);
+      
+      // Transform API data to match component expectations
+      const transformed = response.data.vehicles.map(vehicle => ({
+        id: vehicle.vehicle_id,
+        model: `${vehicle.make || ''} ${vehicle.model || ''}`.trim() || 'Unknown',
+        status: vehicle.status || 'active',
+        location: vehicle.last_alert_location ? 
+          `${vehicle.last_alert_location.lat.toFixed(4)}, ${vehicle.last_alert_location.lng.toFixed(4)}` :
+          'Location unknown',
+        alertCount: vehicle.alert_count || 0,
+        newAlertCount: vehicle.new_alert_count || 0,
+        lastAlertLocation: vehicle.last_alert_location
+      }));
+      
+      setVehicles(transformed);
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const cities = useMemo(() => {
     const set = new Set();
-    mockCars.forEach((c) => set.add(c.location.split(",")[0].trim()));
+    vehicles.forEach((c) => {
+      if (c.location && c.location !== 'Location unknown') {
+        // Extract city from coordinates (simplified)
+        set.add('All');
+      }
+    });
     return ["All", ...Array.from(set).sort()];
-  }, []);
+  }, [vehicles]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return mockCars.filter((c) => {
+    return vehicles.filter((c) => {
       const statusOk = status === "All" || c.status === status;
-      const cityName = c.location.split(",")[0].trim();
-      const cityOk = city === "All" || cityName === city;
+      const cityOk = city === "All"; // Simplified - can enhance later
       const qOk =
         !q ||
         c.id.toLowerCase().includes(q) ||
-        c.driver.toLowerCase().includes(q) ||
-        c.location.toLowerCase().includes(q) ||
-        c.model.toLowerCase().includes(q);
+        c.model.toLowerCase().includes(q) ||
+        c.location.toLowerCase().includes(q);
       return statusOk && cityOk && qOk;
     });
-  }, [status, city, query]);
+  }, [vehicles, status, city, query]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-neutral-600">Loading vehicles...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -47,7 +94,7 @@ export default function Cars() {
         cities={cities}
         query={query}
         onQueryChange={setQuery}
-        onRefresh={() => window.location.reload()}
+        onRefresh={fetchVehicles}
       />
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
