@@ -124,6 +124,62 @@ def create_test_user():
     finally:
         conn.close()
 
+def create_admin_user():
+    """Create or update the admin user: deven@gmail.com"""
+    conn = get_db_connection()
+    if not conn:
+        print("Error: Database connection failed.")
+        return False
+    
+    try:
+        with conn.cursor() as cur:
+            # Check if user already exists
+            cur.execute("SELECT user_id FROM users WHERE email = %s", ('deven@gmail.com',))
+            existing = cur.fetchone()
+            
+            # Get or create default tenant
+            cur.execute("SELECT tenant_id FROM tenant LIMIT 1")
+            tenant_row = cur.fetchone()
+            if not tenant_row:
+                tenant_id = str(uuid.uuid4())
+                cur.execute("""
+                    INSERT INTO tenant (tenant_id, name, email)
+                    VALUES (%s, %s, %s)
+                """, (tenant_id, 'Default Tenant', 'default@tenant.com'))
+            else:
+                tenant_id = tenant_row[0]
+            
+            password_hash = bcrypt.hashpw('Deven@123'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            
+            if existing:
+                # Update existing user
+                user_id = existing[0]
+                cur.execute("""
+                    UPDATE users 
+                    SET password_hash = %s, role = 'admin', full_name = 'Deven Admin'
+                    WHERE user_id = %s
+                """, (password_hash, user_id))
+                conn.commit()
+                print("✓ Updated existing admin user: deven@gmail.com")
+            else:
+                # Create new admin user
+                user_id = str(uuid.uuid4())
+                cur.execute("""
+                    INSERT INTO users (user_id, tenant_id, email, password_hash, full_name, role)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (user_id, tenant_id, 'deven@gmail.com', password_hash, 'Deven Admin', 'admin'))
+                conn.commit()
+                print("✓ Created admin user: deven@gmail.com")
+            
+            return True
+            
+    except Exception as e:
+        conn.rollback()
+        print(f"Error creating admin user: {e}")
+        return False
+    finally:
+        conn.close()
+
 def show_users():
     """Show all users"""
     conn = get_db_connection()
@@ -166,20 +222,28 @@ if __name__ == '__main__':
             sys.exit(1)
     
     print("\n" + "="*60)
-    print("CREATING TEST USER")
+    print("CREATING DEFAULT USERS")
     print("="*60)
-    if create_test_user():
-        print("\n" + "="*60)
-        print("SUCCESS!")
-        print("="*60)
-        show_users()
-        print("\nTest User Credentials:")
-        print("  Email: testing@gmail.com")
-        print("  Password: Test@12345")
-        print("\nAdmin Credentials:")
-        print("  Email: deven@gmail.com")
-        print("  Password: Deven@123")
-    else:
-        print("Failed to create user.")
+    
+    # Create test user
+    if not create_test_user():
+        print("Failed to create test user.")
         sys.exit(1)
+    
+    # Create admin user
+    if not create_admin_user():
+        print("Failed to create admin user.")
+        sys.exit(1)
+    
+    print("\n" + "="*60)
+    print("SUCCESS!")
+    print("="*60)
+    show_users()
+    print("\nDefault User Credentials:")
+    print("  Test User:")
+    print("    Email: testing@gmail.com")
+    print("    Password: Test@12345")
+    print("  Admin User:")
+    print("    Email: deven@gmail.com")
+    print("    Password: Deven@123")
 

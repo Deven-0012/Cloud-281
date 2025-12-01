@@ -114,7 +114,28 @@ ls -la model/
 
 **Note:** The model file name must match `my_yamnet_human_model_fixed.keras` as configured in docker-compose.yml and the ML worker.
 
-### Step 4: Deploy
+### Step 4: Initialize Database and Create Default Users
+
+After starting services, you need to create default users for login:
+
+```bash
+cd backend
+python3 -m venv venv  # Create venv if needed
+source venv/bin/activate
+pip install -r requirements.txt
+python scripts/reset_database.py  # Creates default users
+```
+
+Or use the quick start script which does this automatically:
+```bash
+./QUICK_START.sh
+```
+
+**Default Login Credentials:**
+- Test User: `testing@gmail.com` / `Test@12345`
+- Admin User: `deven@gmail.com` / `Deven@123`
+
+### Step 5: Deploy
 
 ```bash
 # Make setup script executable
@@ -212,9 +233,11 @@ curl http://localhost:5001/v1/alerts
 ### 5. Access Dashboard
 Open browser: http://localhost:3000
 
-**Default Credentials:**
-- Email: `admin@tesla-fleet.com`
-- Password: `admin123`
+**Default Credentials (Created Automatically):**
+- **Test User:** `testing@gmail.com` / `Test@12345` (Owner role)
+- **Admin User:** `deven@gmail.com` / `Deven@123` (Admin role)
+
+**Note:** These users are automatically created when you run `reset_database.py` or `init_default_users.py`. See `SETUP_INSTRUCTIONS.md` for details.
 
 ## 🔌 API Endpoints
 
