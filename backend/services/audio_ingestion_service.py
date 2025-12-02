@@ -22,7 +22,14 @@ from functools import wraps
 import jwt
 
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all routes and origins (for development/tunneling)
+# This allows requests from any origin, including tunnels
+CORS(app, 
+     resources={r"/*": {"origins": "*"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+)
 
 # Configuration
 LOCAL_STORAGE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'audio_uploads')
@@ -143,15 +150,26 @@ def require_role(*allowed_roles):
         return decorated_function
     return decorator
 
-@app.route('/health', methods=['GET'])
+@app.route('/health', methods=['GET', 'OPTIONS'])
 def health_check():
     """Health check endpoint"""
+    if request.method == 'OPTIONS':
+        return '', 200
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat(),
         'service': 'audio-ingestion-service',
         'local_mode': LOCAL_MODE
     }), 200
+
+@app.after_request
+def after_request(response):
+    """Add CORS headers to all responses"""
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 # Authentication endpoints
 @app.route('/v1/auth/register', methods=['POST'])

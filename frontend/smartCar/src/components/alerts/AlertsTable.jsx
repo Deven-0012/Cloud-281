@@ -6,8 +6,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import Card from "../ui/Card";
 import Badge from "../ui/Badge";
 import { fmtTime } from "../../utils/format";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { API_URL } from "../../utils/api";
 
 export default function AlertsTable({ alerts, onDelete }) {
   const { user } = useAuth();

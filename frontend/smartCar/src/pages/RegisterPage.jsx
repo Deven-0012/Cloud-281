@@ -93,6 +93,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
                   className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 outline-none focus:border-gray-900"
                 />
               </div>
@@ -125,6 +126,7 @@ export default function RegisterPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={8}
+                    autoComplete="new-password"
                     className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-12 outline-none focus:border-gray-900"
                   />
                   <button
@@ -149,6 +151,7 @@ export default function RegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
+                    autoComplete="new-password"
                     className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 pr-12 outline-none focus:border-gray-900"
                   />
                   <button
