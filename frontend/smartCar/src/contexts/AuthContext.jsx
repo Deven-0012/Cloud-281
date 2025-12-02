@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { API_URL } from '../utils/api';
 
 const AuthContext = createContext();
 
@@ -48,6 +47,10 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post(`${API_URL}/v1/auth/login`, {
         email,
         password
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       const { token, user: userData } = response.data;
@@ -59,9 +62,16 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
+      // Handle ERR_BLOCKED_BY_CLIENT (usually browser extension)
+      if (error.message.includes('ERR_BLOCKED_BY_CLIENT') || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+        return { 
+          success: false, 
+          error: 'Request blocked. Please disable ad blockers or privacy extensions and try again.' 
+        };
+      }
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Login failed' 
+        error: error.response?.data?.error || error.message || 'Login failed' 
       };
     }
   };
@@ -73,6 +83,10 @@ export const AuthProvider = ({ children }) => {
         password,
         full_name,
         role
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
       
       const { token, user: userData } = response.data;
@@ -84,9 +98,16 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       return { success: true };
     } catch (error) {
+      // Handle ERR_BLOCKED_BY_CLIENT (usually browser extension)
+      if (error.message.includes('ERR_BLOCKED_BY_CLIENT') || error.code === 'ERR_BLOCKED_BY_CLIENT') {
+        return { 
+          success: false, 
+          error: 'Request blocked. Please disable ad blockers or privacy extensions and try again.' 
+        };
+      }
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Registration failed' 
+        error: error.response?.data?.error || error.message || 'Registration failed' 
       };
     }
   };

@@ -2,8 +2,7 @@ import React, { useMemo, useState, useEffect } from "react";
 import axios from "axios";
 import CarsToolbar from "../components/cars/CarsToolbar";
 import CarCard from "../components/cars/CarCard";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { API_URL } from "../utils/api";
 
 export default function Cars() {
   const [vehicles, setVehicles] = useState([]);

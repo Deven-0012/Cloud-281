@@ -2,8 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Card from "../ui/Card";
 import CarOverviewCard from "./CarOverviewCard";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { API_URL } from "../../utils/api";
 
 export default function FleetOverview() {
   const [vehicles, setVehicles] = useState([]);

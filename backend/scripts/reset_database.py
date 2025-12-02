@@ -206,44 +206,52 @@ def show_users():
 if __name__ == '__main__':
     import argparse
     
-    parser = argparse.ArgumentParser(description="Reset database and create test user")
-    parser.add_argument('--no-reset', action='store_true', help='Skip database reset, only create user')
+    parser = argparse.ArgumentParser(description="Reset database (users register themselves)")
+    parser.add_argument('--create-default-users', action='store_true', help='Create default test users (optional, not recommended)')
     args = parser.parse_args()
     
-    if not args.no_reset:
-        print("="*60)
-        print("RESETTING DATABASE")
-        print("="*60)
-        print("This will delete ALL data except admin users.")
-        print("Proceeding with reset...")
-        
-        if not reset_database():
-            print("Failed to reset database.")
-            sys.exit(1)
-    
-    print("\n" + "="*60)
-    print("CREATING DEFAULT USERS")
     print("="*60)
+    print("RESETTING DATABASE")
+    print("="*60)
+    print("This will delete ALL data.")
+    print("Users must register themselves through the web interface.")
+    print("Proceeding with reset...")
     
-    # Create test user
-    if not create_test_user():
-        print("Failed to create test user.")
+    if not reset_database():
+        print("Failed to reset database.")
         sys.exit(1)
     
-    # Create admin user
-    if not create_admin_user():
-        print("Failed to create admin user.")
-        sys.exit(1)
+    # Only create default users if explicitly requested
+    if args.create_default_users:
+        print("\n" + "="*60)
+        print("CREATING DEFAULT USERS (Optional)")
+        print("="*60)
+        
+        # Create test user
+        if not create_test_user():
+            print("Failed to create test user.")
+            sys.exit(1)
+        
+        # Create admin user
+        if not create_admin_user():
+            print("Failed to create admin user.")
+            sys.exit(1)
+        
+        print("\nDefault User Credentials:")
+        print("  Test User:")
+        print("    Email: testing@gmail.com")
+        print("    Password: Test@12345")
+        print("  Admin User:")
+        print("    Email: deven@gmail.com")
+        print("    Password: Deven@123")
+        show_users()
     
     print("\n" + "="*60)
     print("SUCCESS!")
     print("="*60)
-    show_users()
-    print("\nDefault User Credentials:")
-    print("  Test User:")
-    print("    Email: testing@gmail.com")
-    print("    Password: Test@12345")
-    print("  Admin User:")
-    print("    Email: deven@gmail.com")
-    print("    Password: Deven@123")
+    print("Database reset complete.")
+    print("\nNo default users created.")
+    print("Users must register themselves at: /register")
+    print("They can choose 'Owner' or 'Admin' role during registration.")
+    print("\n" + "="*60)
 
