@@ -5,8 +5,7 @@ import Badge from "../ui/Badge";
 import Tabs from "../ui/Tabs";
 import { MapPin } from "lucide-react";
 import { fmtTime } from "../../utils/format";
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+import { API_URL } from "../../utils/api";
 
 export default function AlertsFeed() {
   const [filter, setFilter] = useState("All");

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from '../utils/api';
 import './DashboardPage.css';
-
-const API_URL = import.meta.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const DashboardPage = () => {
   const navigate = useNavigate();
