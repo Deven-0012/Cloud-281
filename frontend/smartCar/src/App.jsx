@@ -10,18 +10,19 @@ import Cars from "./pages/Cars";
 import AlertDetails from "./pages/AlertDetails";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import CarDetails from "./pages/CarDetails";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="p-6">Loading…</div>;
   }
-  
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 }
 
@@ -42,10 +43,11 @@ export default function App() {
         >
           <Route index element={<HomePage />} />
           <Route path="alerts" element={<Alerts />} />
-          <Route path="alerts/:id" element={<AlertDetails />} />
+          <Route path="alertdetails" element={<AlertDetails />} />
           <Route path="cars" element={<Cars />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="devices" element={<Devices />} />
+          <Route path="cardetails" element={<CarDetails />} />
         </Route>
       </Routes>
     </React.Suspense>

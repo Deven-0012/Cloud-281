@@ -62,7 +62,10 @@ export default function CarCard({ car }) {
       <div className="mt-3">{banner}</div>
 
       <div className="mt-3">
-        <Link to={`/car/${car.id}`} className="btn-dark w-full inline-flex items-center justify-center">
+        <Link
+          to={`/cardetails`}
+          className="btn-dark w-full inline-flex items-center justify-center"
+        >
           <Info className="w-4 h-4" /> <span className="ml-1">Details</span>
         </Link>
       </div>
@@ -86,7 +89,9 @@ function Banner({ tone, icon, children }) {
     green: "bg-emerald-50 text-emerald-700 border-emerald-200",
   };
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border ${palette[tone]}`}>
+    <div
+      className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm border ${palette[tone]}`}
+    >
       {icon}
       <div className="truncate">{children}</div>
     </div>

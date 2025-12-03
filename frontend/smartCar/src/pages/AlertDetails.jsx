@@ -35,7 +35,11 @@ export default function AlertDetails() {
   }
 
   const tone =
-    alert.type === "Emergency" ? "red" : alert.type === "High priority" ? "amber" : "blue";
+    alert.type === "Emergency"
+      ? "red"
+      : alert.type === "High priority"
+      ? "amber"
+      : "blue";
 
   return (
     <div className="space-y-6">
@@ -77,7 +81,8 @@ export default function AlertDetails() {
           <div className="mt-4">
             <h3 className="font-medium mb-2">Notes / Description</h3>
             <div className="p-3 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-700">
-              {alert.notes || "Detected unusual audio event. Model confidence high."}
+              {alert.notes ||
+                "Detected unusual audio event. Model confidence high."}
             </div>
           </div>
 
